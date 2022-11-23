@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      canvas {
+        background-image: url(gmbr1.png);
+        background-repeat: no-repeat;
+
+        background-size: cover;
+      }
+    </style>
+  </head>
+  <body onload="startGame()">
+    <script>
+      var myGamePiece;
+      var myObstacles = [];
+      var myScore = 0;
+      var myBackground;
+
+      const left = 37;
+      const right = 39;
+      const up = 38;
+      const down = 40;
+      // const up = 87;
+      // const left = 65;
+      // const down = 83;
+      // const right = 68;
+      // addeventlistener untuk bisa mengendalikan karakter
+      window.addEventListener("keydown", move);
+      window.addEventListener("keyup", stopMove);
+
+      function startGame() {
+        // myGamePiece = new component(60, 60, "karakter1.png", 10, 220, "image");
+        myGamePiece = new component(100, 100, "karakter1.png", 25, 575, "image");
+        // myObstacles = new component(80, 45, "image/pesawat.png", 300, 120, "image");
+        mySound = new sound("music1.mp3")
+        soundObj = new sound("sound1.mp3")
+        myBackground = new component(
+          656,
+          270,
+          "gmbr1.png",
+          0,
+          0,
+          "background"
+        );
+        myScore = new component("30px", "Consolas", "black,", 250, 40, "text");
+        myGameArea.start();
+      }
+      // let canvas = DOCzzz
+      var myGameArea = {
+        canvas: document.createElement("canvas"),
+        start: function () {
+          this.canvas.width = 1325;
+          this.canvas.height = 625;
+          this.context = this.canvas.getContext("2d");
+
+          document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+          this.frameNo = 0;
+          this.interval = setInterval(updateGameArea, 20);
+          // window.addEventListener("keydown", function (e) {
+          //   myGameArea.key = e.keyCode;
+          // });
+          // window.addEventListener("keyup", function (e) {
+          //   myGameArea.key = e.keyCode;
+          // });
+        },
+        clear: function () {
+          this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        },
+        stop: function () {
+          clearInterval(this.interval);
+        },
+      };
+
+      function component(width, height, color, x, y, type) {
+        this.type = type;
+        if (type == "image") {
+          this.image = new Image();
+          this.image.src = color;
+        }
+        this.width = width;
+        this.height = height;
+        this.speedX = 0;
+        this.speedY = 0;
+        this.x = x;
+        this.y = y;
+        this.gravity = 5
+        this.update = function () {
+          if (this.type == "text") {
+            ctx.font = this.width + " " + this.height;
+            ctx.fillStyle = color;
+            ctx.fillText(this.text, this.x, this.y);
+          } else {
+            ctx = myGameArea.context;
+            if (type == "image") {
+              ctx.drawImage(
+                this.image,
+                this.x,
+                this.y,
+                this.width,
+                this.height
+              );
+            } else {
+              ctx.fillStyle = color;
+              ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+          }
+        };
+        this.movement = function () {
+          this.x += this.speedX;
+          this.y += this.speedY + this.gravity
+          this.hitTop();
+          this.hitBottom();
+          this.hitRight();
+          this.hitLeft();
+        };
+
+        this.crashWith = function (otherobj) {
+          var myleft = this.x;
+          var myright = this.x + this.width;
+          var mytop = this.y;
+          var mybottom = this.y + this.height;
+          var otherleft = otherobj.x;
+          var otherright = otherobj.x + otherobj.width;
+          var othertop = otherobj.y;
+          var otherbottom = otherobj.y + otherobj.height;
+          var crash = true;
+          if (
+            mybottom < otherbottom ||
+            mytop > otherbottom ||
+            myright < otherleft ||
+            myleft > otherright
+          ) {
+            crash = false;
+          }
+          return crash;
+        };
+
+        let batas = myObstacles.length;
+        if (batas > 34) {
+          alert("game selesai");
+          window.location.href = "level.html";
+          return crash;
+        }
+
+        // function hit untuk memberi batasan agar karakter dan obstcales tidak melewati batas canvas
+        this.hitTop = function () {
+          let objTop = this.height - this.height
+          if (this.y < objTop) {
+            this.speedY = 2.5
+          }
+        };
+
+        this.hitBottom = function () {
+          let objBottom = 625 - this.height;
+          if (this.y > objBottom) {
+            this.y = objBottom;
+          }
+        };
+
+        this.hitLeft = function () {
+          let objLeft = 1325 - this.width;
+          if (this.x > objLeft) {
+            this.x = objLeft;
+          }
+        };
+
+        this.hitRight = function () {
+          let objRight = this.width - this.width;
+          if (this.x < objRight) {
+            this.x = objRight;
+          }
+        };
+      }
+
+      function everyinterval(n) {
+        if ((myGameArea.frameNo / n) % 1 == 0) {
+          return true;
+        }
+        return false;
+      }
+
+      function updateGameArea() {
+        var x, y;
+        for (i = 0; i < myObstacles.length; i += 1) {
+          if (myGamePiece.crashWith(myObstacles[i])) {
+            mySound.StopMusic()
+            myGameArea.stop();
+            soundObj.PlayMusic()
+            return;
+          }
+        }
+        myGameArea.clear();
+        myGameArea.frameNo += 1;
+        mySound.LoopMusic()
+        if (myGameArea.frameNo == 1 || everyinterval(40)) {
+          // x = myGameArea.canvas.width;
+          // y = myGameArea.canvas.height - 200;
+          // myObstacles.push(
+          //   new component(50, 70, "rintangan1.png", x, 380, "image")
+          // );
+          x = myGameArea.canvas.width;
+        minObs1Y = 50
+        maxObs1Y = 350
+        Obs1Y = Math.floor(Math.random()*(maxObs1Y-minObs1Y+1)+minObs1Y)
+        minObs1X = 1300
+        maxObs1X = 1500
+        Obs1X = Math.floor(Math.random()*(maxObs1X-minObs1X+1)+minObs1X)
+
+        minObs2Y = 400
+        maxObs2Y = 600
+        Obs2Y = Math.floor(Math.random()*(maxObs2Y-minObs2Y+1)+minObs2Y)
+        minObs2X = 1300
+        maxObs2X = 1800
+        Obs2X = Math.floor(Math.random()*(maxObs2X-minObs2X+1)+minObs2X)
+        
+        myObstacles.push(new component ( 50, 70, "rintangan1.png", Obs1X, Obs1Y-50, "image"))
+        myObstacles.push(new component ( 50, 70, "rintangan1.png", Obs2X, Obs2Y-50, "image"))
+        }
+        for (i = 0; i < myObstacles.length; i += 1) {
+          myObstacles[i].x += -10;
+          // myObstacles[i].x += -10;
+          myObstacles[i].update();
+          myScore.text = "SCORE:" + myObstacles.length;
+          myScore.update();
+        }
+
+        // if (myScore => 5) {
+        // 	myGameArea.stop();
+        // }
+        // if (myGameArea.frameNo == 1 || everyinterval(150)) {
+        //   x = myGameArea.canvas.width;
+        //   minHeight = 20;
+        //   maxHeight = 70;
+        //   height = Math.floor(
+        //     Math.random() * (maxHeight - minHeight + 1) + minHeight
+        //   );
+        //   minGap = 50;
+        //   maxGap = 20;
+        //   gap = Math.floor(Math.random() * (maxGap - minGap + 1) + minGap);
+        //   // myObstacles.push(new component(10, height, "img/mobil2.png", x, 170, "image"));
+        //   myObstacles.push(
+        //     new component(50, 50, "rintangan1.png", 700, 220, "image")
+        //   );
+        //   myObstacles.push(
+        //     new component(50, 50, "rintangan1.png", x, 170, "image")
+        //   );
+        // }
+        // for (i = 0; i < myObstacles.length; i += 1) {
+        //   myObstacles[i].x += -5;
+        //   myObstacles[i].update();
+        // }
+
+        // myGamePiece.movement();
+        // myGamePiece.update();
+        // myGameArea.clear();
+        // myGamePiece.speedX = 0;
+        // myGamePiece.speedY = 0;
+        // if (myGameArea.key && myGameArea.key == 37) {
+        //   myGamePiece.speedX -= 5;
+        // }
+        // if (myGameArea.key && myGameArea.key == 39) {
+        //   myGamePiece.speedX += 1;
+        // }
+        // if (myGameArea.key && myGameArea.key == 38) {
+        //   myGamePiece.speedY -= 6;
+        // }
+        // if (myGameArea.key && myGameArea.key == 40) {
+        //   myGamePiece.speedY += 1;
+        // }
+
+        myGamePiece.movement();
+        myGamePiece.update();
+      }
+
+      // function move(event) {
+      //   if (myGameArea.key == left) {
+      //     myGamePiece.speedX = -1;
+      //   } else if (myGameArea.key == right) {
+      //     myGamePiece.speedX = 1;
+      //   } else if (myGameArea.key == up) {
+      //     myGamePiece.speedY = -30;
+      //   } else if (myGameArea.key= down) {
+      //     myGamePiece.speedY = 1;
+      //   }
+      // }
+
+      // function stopMove(event) {
+      //   if (myGameArea.key == left) {
+      //     myGamePiece.speedX = 1;
+      //   } else if (myGameArea.key == right) {
+      //     myGamePiece.speedX = 0;
+      //   } else if (myGameArea.key == up) {
+      //     myGamePiece.speedY = 10;
+      //   } else if (myGameArea.key == down) {
+      //     myGamePiece.speedY = -1;
+      //   }
+      // }
+      function sound(src){
+	    this.sound = document.createElement("audio");
+	    this.sound.src = src;
+	    this.sound.setAttribute("preload", "auto");
+	    this.sound.setAttribute("controls", "none");
+	    this.sound.style.display = "none";
+	    document.body.appendChild(this.sound);
+	    this.PlayMusic = function(){
+	        this.sound.play();
+	    }
+	    this.StopMusic = function(){
+	        this.sound.pause();
+	    }
+	    this.LoopMusic = function(){
+	        this.sound.setAttribute("loop", "loop");
+	        this.sound.play();
+	    }
+	    this.VolumeMusic = function(vol){
+	        this.sound.volume = vol;
+	    }
+	}
+      function move(){
+        const keyPressed = event.keyCode
+        if (keyPressed == up){
+          myGamePiece.speedY = -10
+        } else if (keyPressed == down){
+          myGamePiece.speedY = 5
+        }
+        else if (keyPressed == left){
+          myGamePiece.speedX = -1
+        } else if (keyPressed == right){
+          myGamePiece.speedX = 1
+        }
+      }
+      function stopMove(){
+        const keyPressed = event.keyCode
+        if (keyPressed == up){
+          myGamePiece.speedY = 0
+        } else if (keyPressed == down){
+          myGamePiece.speedY = 0
+        }
+        else if (keyPressed == left){
+          myGamePiece.speedX = 0
+        } else if (keyPressed == right){
+          myGamePiece.speedX = 0
+        }
+      }
+    </script>
+  </body>
+</html>
